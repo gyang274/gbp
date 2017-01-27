@@ -391,9 +391,13 @@ sn1d$o  # weight of items selected
 sn1d$ok # indicator of whether all items are selected
 ```
 
-<!--
-
 # Some practical examples
+
+## [gbp: a bin packing problem solver](https://gyang.shinyapps.io/gbp_app/)
+
+A shiny application that demonstrate how to use how to use __gbp__ function __bpp_solver__ in fulfilling the order packing process in business operations.
+
+<!--
 
 ## [How Jet.com design the set of boxes for packing millions customer's orders?](./link)
 

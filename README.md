@@ -14,10 +14,10 @@ Vignettes
 
 TODO: add link to vignettes
 
-Shiny App
----------
+[Shiny App](https://gyang.shinyapps.io/gbp_app/)
+------------------------------------------------
 
-TODO: add link to shiny app
+A [shiny application](https://gyang.shinyapps.io/gbp_app/) that demonstrate how to use how to use **gbp** function **bpp\_solver** in fulfilling the order packing process in business operations.
 
 OpenCPU API
 -----------

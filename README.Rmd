@@ -26,9 +26,9 @@ The 4d bin packing problem solver aims to solve bin packing problem, a.k.a conta
 
 TODO: add link to vignettes
 
-## Shiny App
+## [Shiny App](https://gyang.shinyapps.io/gbp_app/)
 
-TODO: add link to shiny app
+A [shiny application](https://gyang.shinyapps.io/gbp_app/) that demonstrate how to use how to use __gbp__ function __bpp_solver__ in fulfilling the order packing process in business operations.
 
 ## OpenCPU API
 
