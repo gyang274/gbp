@@ -1,0 +1,7 @@
+CC=ccache clang -Qunused-arguments
+CXX=ccache clang++ -Qunused-arguments
+CCACHE_CPP2=yes
+
+PKG_CXX_STD=CXX11
+PKG_CXXFLAGS=-I../inst/include
+PKG_LIBS+=$(shell "${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe" -e "Rcpp:::LdFlags()")

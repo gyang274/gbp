@@ -1,0 +1,4 @@
+useDynLib(gbp)
+importFrom(Rcpp, evalCpp)
+import(methods, magrittr, data.table, Rcpp)
+exportPattern("^[[:alpha:]]+")

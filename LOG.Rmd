@@ -1,0 +1,29 @@
+---
+output:
+  md_document:
+    variant: markdown_github
+---
+
+<!-- LOG.md is generated from LOG.Rmd. Please edit that file -->
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "fig/LOG-"
+)
+```
+
+# gbp development log file
+
+## 2017.01.17
+
+package name move from bpp to gbp as bpp was taken
+
+## 2016.11.26
+
+initial version complete
+
+## 2016.10.17 
+
+initiate the bpp project

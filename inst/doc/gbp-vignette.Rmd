@@ -1,0 +1,402 @@
+---
+title: "gbp: a bin packing problem solver."
+author: "Guang Yang"
+date: "2016-11-19"
+output: 
+  rmarkdown::html_document:
+    toc: true
+    toc_float: true
+    fig_caption: yes
+    theme: united
+vignette: >
+  %\VignetteIndexEntry{gbp: a bin packing problem solver.}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+# Overview
+
+Basic infrastructure and several algorithms for __1d - 4d bin packing problem__. The __gbp__ package provides a set of __c-level classes and solvers for 1d - 4d bin packing problem__, and __an r-level solver for 4d bin packing problem__, which is a wrapper over the c-level 4d bin packing problem solver. 
+
+The 4d bin packing problem solver aims to solve bin packing problem, a.k.a container loading problem, with an additional constraint on weight. Given a set of rectangular-shaped items, and a set of rectanular-shaped bins with weight limit, the solver looks for an orthogonal packing solution such that minimizes the number of bins and maximize volume utilization. Each rectangular-shaped item i = 1, .. , n is characterized by length l\_i, depth d\_i, height h\_i, and weight w\_i, and each rectanular-shaped bin j = 1, .. , m is specified similarly by length l\_j, depth d\_j, height h\_j, and weight limit w\_j. The item can be rotated into any orthogonal direction, and no further restrictions implied.
+
+# An introduction example
+
+```{r message=FALSE}
+library(gbp)
+```
+
+Imagine yourself as a store manager, and your customers are placing orders on your inventory catalog. The orders should be specified in a __data.table__, where each order is uniquely identified by the __order id (oid)__, and each order includes one or more products which each uniquely identified by __stock keeping unit (sku)__ with specific __length (l), depth (d), height (h)__ and __weight (w)__. The orders are expected to be packed into one or more boxes, a.k.a, bins. The available bin types are specified in a __data.table__, where each type of bin is uniquely indentified by a __bin id (id)__ with specific __length (l), depth (d), height (h)__ and __weight limit (w)__. The objective is __packing each order into the smallest number of bins, and then smallest bins to achieve highest utlization rate, subject to the three dimensional none overlap contraints and weight limit constraint__. 
+
+```{r}
+#- bpp_solver: input: order list in data.table `it` and bin list in data.table `bn`
+
+#- it
+#  it item <data.table>
+#  - oid order id <integer>
+#  - sku items id <character>
+#  - l it length which scale will be placed along x-coordinate <numeric>
+#  - d it depth  which scale will be placed along y-coordinate <numeric>
+#  - h it height which scale will be placed along z-coordinate <numeric>
+#  - w it weight which scale will be placed along w-coordinate <numeric>
+# l d h are subject to rotate, while w is on a separate single dimension
+it <- data.table::data.table(
+  oid = c(1428571L, 1428571L, 1428571L, 1428572L, 1428572L, 1428572L, 1428572L, 1428572L),
+  sku = c("A0A0A0", "A0A0A1", "A0A0A1", "A0A0A0", "A0A0A1", "A0A0A1", "A0A0A2", "A0A0A3"),
+  l   = c(2.140000, 7.240000, 7.240000, 2.140000, 7.240000, 7.240000, 6.000000, 4.000000),
+  d   = c(3.580000, 7.240000, 7.240000, 3.580000, 7.240000, 7.240000, 6.000000, 4.000000),
+  h   = c(4.760000, 2.580000, 2.580000, 4.760000, 2.580000, 2.580000, 6.000000, 4.000000),
+  w   = c(243.0000, 110.0000, 110.0000, 243.0000, 110.0000, 110.0000, 235.0000, 258.0000)
+)
+
+knitr::kable(it)
+
+#- bn
+#  bn bins <data.table>
+#  - id bn id <character>
+#  - l: bn length limit along x-coordinate <numeric>
+#  - d: bn depth  limit along y-coordinate <numeric>
+#  - h: bn height limit along z-coordinate <numeric>
+#  - w: bn weight limit along w - a separate single dimension <numeric>
+#  - l, d, h will be sorted to have l >= d >= h within solver
+# bin must be ordered by preference such that the first bin is most preferred one.
+
+bn <- data.table::data.table(
+  id = c("K0001", "K0002", "K0003", "K0004", "K0005"),
+  l  = c(06.0000, 10.0000, 09.0000, 10.0000, 22.0000),
+  d  = c(06.0000, 08.0000, 08.0000, 10.0000, 14.0000),
+  h  = c(06.0000, 06.0000, 07.0000, 10.0000, 09.0000),
+  w  = c(600.000, 600.000, 800.000, 800.000, 800.000)
+)
+
+
+knitr::kable(bn)
+
+```
+
+
+# __gbp__ package design
+
+## R-level class, solver and viewer
+
+### solver
+
+The function __gbp::bpp_solver(it, bn)__ aims to pack each order into the smallest number of bins, and then smallest bins to achieve highest utlization rate, subject to the three dimensional none overlap contraints and weight limit constraint.
+
+```{r}
+#- bpp_solver: output: packing solution
+
+#- sn
+#  sn bpp_solution packing solution <list>
+#  - it item <data.table>
+#    - oid: order id <integer>
+#    - sku: stock keeping unit as it id <character>
+#    - tid: ticket id - an unique id within oid <integer>
+#    - otid: order id x ticket id - an unique indentifier indicate it with same tid can be packed into one bin <character>
+#    - bid: bn id <integer>
+#    - x, y, z it position in bid bin <numeric>
+#    - l, d, h it scale along x, y, z <numeric>
+#    - w it weight <numeric>
+#  - bn bins <data.table>
+#    - id bn id <character>
+#    - l bn length limit along x-coordinate <numeric>
+#    - d bn depth  limit along y-coordinate <numeric>
+#    - h bn height limit along z-coordinate <numeric>
+#    - w bn weight limit along w - a separate single dimension <numeric>
+sn <- gbp::bpp_solver(it = it, bn = bn)
+
+sn$it
+
+sn$bn
+
+```
+
+The packing solution is revealed in the __data.table sn[["it"]]__. The packing solution table includes 12 columns: the __order id (oid)__, the __stock keeping unit (sku)__, the __ticket id (tid)__ which identify items should be packed into the same bin, the __order ticket id (otid)__ which is a unique identifier accross all orders, the __bin id (bid)__ which identify the bin type associated with the ticket, the coordinates within the bin __x, y, z__, and the item's __length (l), depth (d), height (h)__ and __weight (w)__. The solution can be viewed using __gbp::bpp_viewer(sn)__. 
+ 
+### viewer
+
+```{r}
+#- bpp_viewer: a packing solution viewer
+#   requires rgl, run in r-console will create interactive 3d views in rgl window
+# bpp_viewer(sn)
+```
+
+The function __bpp_solver__ is fast. I applied a simpler version of __bpp_solver__ when designing and optimizing the set of boxes used in Jet.com's warehouses. Back then, Jet.com receives 15,000 - 20,000 orders everyday, and 1 - 100 items in each order. The __bpp_solver__ can pack all orders in 2 minutes - 5 minutes. The solution quality is also high. We formulated a mixed integer linear programming algorithm to find global optimial solution, using the __bpp_solver__ solution as initial search point. We observed that __bpp_solver__ solution is often equivalent or very close to the global optimial solution - often within 1% - 2% of utilization rate difference. One particular case to note is that the utilization rate difference could be as high as 4% - 5% when __bpp_solver__ solution requires exact 2 bins. This is a consequence of the greedy algorithm. At last, the __bpp_solver__ is __300x__ faster than the mixed integer linear programming.
+
+## C-level class, solver and viewer
+
+The design flow of c-level classes, solvers and viewers are straightforward. The __gbp1d__, __gbp2d__, __gbp3d__, and __gbp4d__ are classes defined at each dimension, an instance of such class holds a feasible bin packing solution in corresponding dimension. The __gbp1d_solver_dpp__, __gbp2d_solver_dpp__, __gbp3d_solver_dpp__, and __gbp4d_solver_dpp__ are solvers designed to solve corresponding problem, and return an instance of corresponding class. The __gbp2d_checkr__, __gbp3d_checkr__, and __gbp4d_checkr__ are checkers designed to verify a solution is feasible. And, the __gbp2d_viewer__, __gbp3d_viewer__, and __gbp4d_viewer__ are viewers designed to visualize a solution.
+
+### gbp4d
+
+The 4d scenairo contains two classes __gbp4d__ and __gbp4q__, and two solvers __gbp4d_solver_dpp__ and __gbp4d_solver_dpp_filt__. 
+
+The two solvers implement an extreme point based best fit first recursive algorithm. At each step an item is fit into all pontential positions with all possible orientation, and a fit schema is scored by entropy of the extreme points segmented residual space. The fit schema with lowest entropy score will be selected for recursive calls. The recursive is a limited rescursive fit on last few high profitable items, number of recursive call is gradually increasing toward the end of fit sequence. The idea is that last few items often small, moving them around can help finding feasible solutions.
+
+#### single bin
+
+The function __gbp4d_solver_dpp(p, ldhw, m)__ aims to solve four dimensional bin packing (three dimensional none overlapping with weight limit) with repect to packing into a single bin. The inputs are the __profit vector p__ which is a numeric vector defines the item's packing sequence, highest profit first pack, the __item's characterization matrix (ldhw)__ which is a 4 x N numeric matrix with each column corresponding to an item's length, depth, height and weight, and the __bin's characterization vector (m)__ which is a 4 x 1 numeric vector corresponding to bin's length, depth, height and weight limit. The objective is fit as much item volume as possible into the bin. The solution resturned is an instance of __gbp4d__ class.
+
+##### solver
+
+```{r}
+#- gbp4d
+
+#- ldhw: item l, d, h, w in matrix
+ldhw <- t(as.matrix(it[oid == 1428572L, .(l, d, h, w)]))
+ldhw
+
+#- m: bin l, d, h in matrix
+m <- t(as.matrix(bn[ , .(l, d, h, w)])) # multple bin
+m
+
+#- p: item fit sequence w.r.t bin
+p <- gbp4d_solver_dpp_prep_create_p(ldhw, m[, 4L]) # single bin
+p
+
+#- sn
+sn4d <- gbp4d_solver_dpp(p, ldhw, m[, 4L])
+
+sn4d$it # matrix of items x, y, z, w (weight bn is holding when fit it into bn), l, d, h, w (weight of it itself) (x, y, z, w set into -1 when item not fit into bin)
+
+sn4d$k  # indicator of which items are fitted into bin
+
+sn4d$bn # matrix of bins l, d, h, w (weight limit)
+
+sn4d$o  # volume of items fitted into bin
+
+sn4d$ok # indicator of whether all items are fitted into bin
+```
+
+##### checkr
+
+```{r}
+gbp4d_checkr(sn4d) #- check: no overlap in 3d volume and no over weight limit
+```
+
+##### viewer
+
+```{r}
+# gbp4d_viewer(sn4d)
+```
+
+#### multiple bins
+
+The function __gbp4d_solver_dpp_filt(ldhw, m)__ aims to solve four dimensional bin packing (three dimensional none overlapping with weight limit) with repect to packing into a multiple bins. The input __bin's characterization vector (m)__ is a 4 x M numeric vector with each column corresponding to one bin's length, depth, height and weight limit. The objective is fit as much item volume as possible into the bin, and select the bin with smaller index when two bin's can fit the same volume. The solution resturned is an instance of __gbp4q__ class.
+
+##### solver
+
+```{r}
+#- gbp4q
+
+sn4q <- gbp4d_solver_dpp_filt(ldhw, m) # multiple bins, no fit sequence p 
+# p is determined w.r.t each bin using algorithm in gbp4d_solver_dpp_prep_create_p 
+
+sn4q$it # matrix of items x, y, z, w (weight bn is holding when fit it into bn), l, d, h, w (weight of it itself) (x, y, z, w set into -1 when item not fit into bin)
+
+sn4q$k  # indicator of which items are fitted into bin
+
+sn4q$bn # matrix of bins l, d, h, w (weight limit)
+
+sn4q$f  # indicator of which bin is selected
+
+sn4q$o  # volume of items fitted into bin
+
+sn4q$ok # indicator of whether all items are fitted into bin
+```
+
+##### checkr
+
+```{r}
+gbp4q_checkr(sn4q) #- check: no overlap in 3d volume and no over weight limit
+```
+
+##### viewer
+
+```{r}
+# gbp4q_viewer(sn4q)
+```
+
+## gbp3d
+
+The 3d scenairo contains two classes __gbp3d__ and __gbp3q__, and two solvers __gbp3d_solver_dpp__ and __gbp3d_solver_dpp_filt__. 
+
+#### single bin
+
+The function __gbp3d_solver_dpp(p, ldh, m)__ aims to solve three dimensional bin packing with repect to packing into a single bin. The inputs are the __profit vector p__ which is a numeric vector defines the item's packing sequence, highest profit first pack, the __item's characterization matrix (ldh)__ which is a 3 x N numeric matrix with each column corresponding to an item's length, depth, and height, and the __bin's characterization vector (m)__ which is a 3 x 1 numeric vector corresponding to bin's length, depth, and height. The objective is fit as much item volume as possible into the bin, and the solution resturned is an instance of __gbp3d__ class.
+
+##### solver
+
+```{r}
+#- gbp3d
+
+sn3d <- gbp3d_solver_dpp(p, ldhw[1L:3L, ], m[, 4L])
+
+sn3d$it # matrix of items x, y, z, l, d, h (x, y, z set into -1 when item not fit into bin)
+
+sn3d$k  # indicator of which items are fitted into bin
+
+sn3d$bn # matrix of bins l, d, h
+
+sn3d$o  # volume of items fitted into bin
+
+sn3d$ok # indicator of whether all items are fitted into bin
+```
+
+#### checkr
+
+```{r}
+gbp3d_checkr(sn3d) #- check: no overlap in 3d volume
+```
+
+#### viewer
+```{r}
+# gbp3d_viewer(sn3d)
+```
+
+#### multiple bins
+
+The function __gbp3d_solver_dpp_filt(ldh, m)__ aims to solve three dimensional bin packing with repect to packing into a multiple bins. The input __bin's characterization vector (m)__ is a 3 x M numeric vector with each column corresponding to one bin's length, depth, and height. The objective is fit as much item volume as possible into the bin, and select the bin with smaller index when two bin's can fit the same volume. The solution resturned is an instance of __gbp3q__ class.
+
+##### solver
+
+```{r}
+#- gbp3q
+
+sn3q <- gbp3d_solver_dpp_filt(ldhw[1L:3L, ], m) # multiple bins, no fit sequence p
+# p is determined w.r.t each bin using algorithm in gbp3d_solver_dpp_prep_create_p 
+
+sn3q$it # matrix of items x, y, z, l, d, h (x, y, z set into -1 when item not fit into bin)
+
+sn3q$k  # indicator of which items are fitted into bin
+
+sn3q$bn # matrix of bins l, d, h
+
+sn3q$f  # indicator of which bin is selected
+
+sn3q$o  # volume of items fitted into bin
+
+sn3q$ok # indicator of whether all items are fitted into bin
+```
+
+##### checkr
+
+```{r}
+gbp3q_checkr(sn3q) #- check: no overlap in 3d volume
+```
+
+##### viewer
+
+```{r}
+# gbp3q_viewer(sn3q)
+```
+
+### gbp2d
+
+The 2d scenairo contains two classes __gbp2d__ and __gbp2q__, and two solvers __gbp2d_solver_dpp__ and __gbp2d_solver_dpp_filt__. 
+
+#### single bin
+
+The function __gbp2d_solver_dpp(p, ld, m)__ aims to solve two dimensional bin packing with repect to packing into a single bin. The inputs are the __profit vector p__ which is a numeric vector defines the item's packing sequence, highest profit first pack, the __item's characterization matrix (ld)__ which is a 2 x N numeric matrix with each column corresponding to an item's length and depth, and the __bin's characterization vector (m)__ which is a 2 x 1 numeric vector corresponding to bin's length and depth. The objective is fit as much item volume as possible into the bin, and the solution resturned is an instance of __gbp2d__ class.
+
+##### solver
+
+```{r}
+#- gbp2d
+
+sn2d <- gbp2d_solver_dpp(p, ldhw[1L:2L, ], m[, 4L])
+
+sn2d$it # matrix of items x, y, l, d (x, y set into -1 when item not fit into bin)
+
+sn2d$k  # indicator of which items are fitted into bin
+
+sn2d$bn # matrix of bins l, d
+
+sn2d$o  # volume of items fitted into bin
+
+sn2d$ok # indicator of whether all items are fitted into bin
+```
+
+##### checkr
+
+```{r}
+gbp2d_checkr(sn2d) #- check: no overlap in 2d area
+```
+
+##### viewer
+```{r}
+# gbp2d_viewer(sn2d) #- view on XZ surface and set Y into 1 to give stereo perception
+```
+
+#### multiple bins
+
+The function __gbp2d_solver_dpp_filt(ld, m)__ aims to solve two dimensional bin packing with repect to packing into a multiple bins. The input __bin's characterization vector (m)__ is a 2 x M numeric vector with each column corresponding to one bin's length and depth. The objective is fit as much item volume as possible into the bin, and select the bin with smaller index when two bin's can fit the same volume. The solution resturned is an instance of __gbp2q__ class.
+
+##### solver
+
+```{r}
+#- gbp2q
+
+sn2q <- gbp2d_solver_dpp_filt(ldhw[1L:2L, ], m) # multiple bins, no fit sequence p
+# p is determined w.r.t each bin using algorithm in gbp2d_solver_dpp_prep_create_p 
+
+sn2q$it # matrix of items x, y, l, d (x, y set into -1 when item not fit into bin)
+
+sn2q$k  # indicator of which items are fitted into bin
+
+sn2q$bn # matrix of bins l, d
+
+sn2q$f  # indicator of which bin is selected
+
+sn2q$o  # volume of items fitted into bin
+
+sn2q$ok # indicator of whether all items are fitted into bin
+```
+
+##### checkr
+
+```{r}
+gbp2q_checkr(sn2q) #- check: no overlap in 2d area
+```
+
+##### viewer
+
+```{r}
+# gbp2q_viewer(sn2q)
+```
+
+### gbp1d
+
+The 1d scenairo contains a single solver __gbp1d_solver_dpp__, which aims to solve [one dimensional bin packing problem, a.k.a Knapsack problem](https://en.wikipedia.org/wiki/Knapsack_problem). In mathematical, __gbp1d_solver_dpp(p, w, c)__ will: __maximize__ $\sum_{j=1}^{n} p_j x_j$, __subject to__ $\sum_{j=1}^{n} w_j x_j \leq c, x_j \in \{0, 1\}, j = 1, ...., n$, where __p__ is a numeric vector of each item's profit, __w__ is an integer vector of each item's weight, __c__ is an integer scalar of the total weight limit.
+
+The function __gbp1d_solver_dpp(p, w, c)__ implements a dynamic programming solution, and return an instance of __gbp1d__ class. A __gbp1d__ class instance would have 6 member fields: the profit vector __p__, the weight vector __w__, the weight constraint __c__, the selection vector __k__ which is a boolean vector indicates whether or not an item is selected in the solution, the objective value __o__ which is the sum of the weight of the items selected, and the boolean indicator __ok__ indicates whether or not all items are selected.
+
+```{r}
+#- gbp1d
+
+v <- apply(ldhw[1L:3L, ], 2L, prod)
+
+sn1d <- gbp1d_solver_dpp(p = v, w = ldhw[4L, ], c = 714.28)
+
+sn1d$p # vector of items profit
+
+sn1d$w # vector of items weight
+
+sn1d$c # weight limit constraint
+
+sn1d$k  # indicator of which items are selected
+
+sn1d$o  # weight of items selected
+
+sn1d$ok # indicator of whether all items are selected
+```
+
+<!--
+
+# Some practical examples
+
+## [How Jet.com design the set of boxes for packing millions customer's orders?](./link)
+
+A document explains how Jet.com use [__gbp__](https://CRAN.R-project.org/package=gbp), combined with the package [__skm__](https://CRAN.R-project.org/package=skm), for designing boxes used in warehouse for packing millions of customer's orders.
+
+-->
