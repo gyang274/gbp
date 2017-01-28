@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# gbp development log file
+# gbp
 
 ## 2017.01.17
 

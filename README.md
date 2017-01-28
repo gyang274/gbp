@@ -5,9 +5,9 @@
 Overview
 --------
 
-Basic infrastructure and several algorithms for **1d - 4d bin packing problem**. The **gbp** package provides a set of **c-level classes and solvers for 1d - 4d bin packing problem**, and **an r-level solver for 4d bin packing problem**, which is a wrapper over the c-level 4d bin packing problem solver.
+Basic infrastructure and several algorithms for **1d - 4d bin packing problem**. This package provides a set of **c-level classes and solvers for 1d - 4d bin packing problem**, and **an r-level solver for 4d bin packing problem**, which is a wrapper over the c-level 4d bin packing problem solver.
 
-The 4d bin packing problem solver aims to solve bin packing problem, a.k.a container loading problem, with an additional constraint on weight. Given a set of rectangular-shaped items, and a set of rectanular-shaped bins with weight limit, the solver looks for an orthogonal packing solution such that minimizes the number of bins and maximize volume utilization. Each rectangular-shaped item i = 1, .. , n is characterized by length l\_i, depth d\_i, height h\_i, and weight w\_i, and each rectanular-shaped bin j = 1, .. , m is specified similarly by length l\_j, depth d\_j, height h\_j, and weight limit w\_j. The item can be rotated into any orthogonal direction, and no further restrictions implied.
+The 4d bin packing problem solver aims to solve bin packing problem, a.k.a container loading problem, with an additional constraint on weight. Given a set of rectangular-shaped items, and a set of rectangular-shaped bins with weight limit, the solver looks for an orthogonal packing solution such that minimizes the number of bins and maximize volume utilization. Each rectangular-shaped item i = 1, .. , n is characterized by length l\_i, depth d\_i, height h\_i, and weight w\_i, and each rectangular-shaped bin j = 1, .. , m is specified similarly by length l\_j, depth d\_j, height h\_j, and weight limit w\_j. The item can be rotated into any orthogonal direction, and no further restrictions implied.
 
 Vignettes
 ---------
