@@ -12,12 +12,12 @@ The 4d bin packing problem solver aims to solve bin packing problem, a.k.a conta
 Vignettes
 ---------
 
-TODO: add link to vignettes
+A [vignettes](https://cran.r-project.org/web/packages/gbp/vignettes/gbp-vignette.html) that demonstrates the infrastructure and algorithms available from this r-package.
 
 [Shiny App](https://gyang.shinyapps.io/gbp_app/)
 ------------------------------------------------
 
-A [shiny application](https://gyang.shinyapps.io/gbp_app/) that demonstrate how to use how to use **gbp** function **bpp\_solver** in fulfilling the order packing process in business operations.
+A [shiny application](https://gyang.shinyapps.io/gbp_app/) that demonstrates how to use **gbp** function **bpp\_solver** in fulfilling the order packing process in business operations.
 
 OpenCPU API
 -----------
