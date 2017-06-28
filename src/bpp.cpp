@@ -306,23 +306,24 @@ bool bpp_solver_sgl_screen(
 
   sldhw.rows(0, 2) = arma::sort(ldhw.rows(0, 2), "descend", 0); sldhw.row(3) = ldhw.row(3);
 
-  arma::mat vldhw(2, ldhw.n_cols); // const arma::vec vldhw(2);
+  // arma::mat vldhw(2, ldhw.n_cols); // const arma::vec vldhw(2);
 
-  vldhw.row(0) = ldhw.row(0) % ldhw.row(1) % ldhw.row(2); vldhw.row(1) = ldhw.row(3);
+  // vldhw.row(0) = ldhw.row(0) % ldhw.row(1) % ldhw.row(2); vldhw.row(1) = ldhw.row(3);
 
   // m: assume m is sorted l >= d >= h?
   arma::mat sm(4, m.n_cols); // const arma::mat sm(4, m.n_cols);
 
   sm.rows(0, 2) = arma::sort(m.rows(0, 2), "descend", 0); sm.row(3) = m.row(3);
 
-  arma::mat vm(2, m.n_cols); // const arma::mat vm(2, m.n_cols);
+  // arma::mat vm(2, m.n_cols); // const arma::mat vm(2, m.n_cols);
 
-  vm.row(0) = m.row(0) % m.row(1) % m.row(2); vm.row(1) = m.row(3);
+  // vm.row(0) = m.row(0) % m.row(1) % m.row(2); vm.row(1) = m.row(3);
 
   // main
   bool ok = true;
 
   // an implement assume the last one bn is dominant, check this assumption in bpp_solver_dpp().
+
   // for (arma::uword i = 0; i < ldh.n_cols; i++) {
   //   if (sldhw(0, i) > sm(0, sm.n_cols - 1) ||
   //       sldhw(1, i) > sm(1, sm.n_cols - 1) ||
@@ -343,14 +344,30 @@ bool bpp_solver_sgl_screen(
   // gbp3d_solver_dpp_filt assume last bn is dominant, and it cannot fit into bn, so ok = false
   // and k = 0, and as a result itlmt can never be driven down to zero.
 
+  // for (arma::uword i = 0; i < ldhw.n_cols; i++) {
+  //   if (arma::all(sldhw(0, i) > sm.row(0)) ||
+  //       arma::all(sldhw(1, i) > sm.row(1)) ||
+  //       arma::all(sldhw(2, i) > sm.row(2)) ||
+  //       arma::all(sldhw(3, i) > sm.row(3)) ||
+  //       arma::all(vldhw(0, i) > vm.row(0)) // ||
+  //       // arma::all(vldhw(1, i) > vm.row(1)) // same as arma::all(sldhw(3, i) > sm.row(3))
+  //   ) {
+  //     ok = false; itlmt = itlmt(arma::find(itlmt != i));
+  //   }
+  // }
+
+  // update logic
+  // condier case it = c(14, 14, 14), bn0 = c(40, 10, 10), bn1 = c(10, 40, 10), bn2 = c(10, 10, 40)
+  // in such case it pass the logic below, but still can not fit into any single bn
+
   for (arma::uword i = 0; i < ldhw.n_cols; i++) {
-    if (arma::all(sldhw(0, i) > sm.row(0)) ||
-        arma::all(sldhw(1, i) > sm.row(1)) ||
-        arma::all(sldhw(2, i) > sm.row(2)) ||
-        arma::all(sldhw(3, i) > sm.row(3)) ||
-        arma::all(vldhw(0, i) > vm.row(0)) // ||
-        // arma::all(vldhw(1, i) > vm.row(1)) // same as arma::all(sldhw(3, i) > sm.row(3))
-    ) {
+    bool ik = false;
+    for (arma::uword j = sm.n_cols - 1; j > 0; j--) {
+      if (arma::all(sldhw.col(i) < sm.col(j - 1))) {
+        ik = true; break;
+      }
+    }
+    if (!ik) {
       ok = false; itlmt = itlmt(arma::find(itlmt != i));
     }
   }
