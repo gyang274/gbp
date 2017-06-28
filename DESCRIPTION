@@ -26,7 +26,7 @@ Imports: methods,
     rgl, Rcpp (>= 0.12.7)
 Suggests: testthat,
     knitr, rmarkdown
-LinkingTo: Rcpp, RcppArmadillo
+LinkingTo: Rcpp, RcppArmadillo (>= 0.7.400.2.0)
 SystemRequirements: C++11, GNU make
 LazyData: TRUE
 Encoding: UTF-8

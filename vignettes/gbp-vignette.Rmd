@@ -131,7 +131,7 @@ The design flow of c-level classes, solvers and viewers are straightforward. The
 
 The 4d scenairo contains two classes __gbp4d__ and __gbp4q__, and two solvers __gbp4d_solver_dpp__ and __gbp4d_solver_dpp_filt__. 
 
-The two solvers implement an extreme point based best fit first recursive algorithm. At each step an item is fit into all pontential positions with all possible orientation, and a fit schema is scored by entropy of the extreme points segmented residual space. The fit schema with lowest entropy score will be selected for recursive calls. The recursive is a limited rescursive fit on last few high profitable items, number of recursive call is gradually increasing toward the end of fit sequence. The idea is that last few items often small, moving them around can help finding feasible solutions.
+The two solvers implement an extreme point based best fit first recursive algorithm. At each step an item is fit into all potential positions with all possible orientation, and a fit schema is scored by entropy of the extreme points segmented residual space. The fit schema with lowest entropy score will be selected for recursive calls. The recursive is a limited recursive fit on last few high profitable items, number of recursive call is gradually increasing toward the end of fit sequence. The idea is that last few items often small, moving them around can help finding feasible solutions.
 
 #### single bin
 
