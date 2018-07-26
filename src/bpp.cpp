@@ -358,11 +358,11 @@ bool bpp_solver_sgl_screen(
 
   // update logic
   // condier case it = c(14, 14, 14), bn0 = c(40, 10, 10), bn1 = c(10, 40, 10), bn2 = c(10, 10, 40)
-  // in such case it pass the logic below, but still can not fit into any single bn
+  // in such case it pass the logic above, but still can not fit into any single bn
 
   for (arma::uword i = 0; i < ldhw.n_cols; i++) {
     bool ik = false;
-    for (arma::uword j = sm.n_cols - 1; j > 0; j--) {
+    for (arma::uword j = sm.n_cols; j > 0; j--) {
       if (arma::all(sldhw.col(i) < sm.col(j - 1))) {
         ik = true; break;
       }
