@@ -23,9 +23,9 @@ License: MIT + file LICENSE
 Depends: R (>= 3.0.0),
     magrittr, data.table
 Imports: methods,
-    rgl, Rcpp (>= 0.12.7)
+    Rcpp (>= 0.12.7)
 Suggests: testthat,
-    knitr, rmarkdown
+    knitr, rmarkdown, rgl
 LinkingTo: Rcpp, RcppArmadillo (>= 0.7.400.2.0)
 SystemRequirements: C++11, GNU make
 LazyData: TRUE
