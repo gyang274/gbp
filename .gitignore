@@ -9,3 +9,8 @@
 /rsc/
 /wfx/
 /zfx/
+
+#artifacts of R CMD build/check
+*.Rcheck
+*.tar.gz
+
