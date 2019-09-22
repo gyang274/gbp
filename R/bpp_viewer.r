@@ -165,6 +165,9 @@ bpp_viewer <- function(
 #' @family bpp_viewer
 #' @rdname bpp_viewer_single
 #' @export
+.N = NULL
+`:=` = function(...) NULL
+
 bpp_viewer_single <- function(
   it, bn, title = NULL, subtitle = NULL, it_rgl_control = NULL, bn_rgl_control = NULL, label_it = TRUE, label_bn = TRUE
 ) {
@@ -337,4 +340,3 @@ create_bn_rgl_control <- function() {
 
 }
 #------------------------------------------------------------------------------#
-

@@ -20,10 +20,11 @@ Description: Basic infrastructure and several algorithms for 1d-4d bin packing
     The item can be rotated into any orthogonal direction, and no further
     restrictions implied.
 License: MIT + file LICENSE
-Depends: R (>= 3.0.0),
-    magrittr, data.table
+Depends: R (>= 3.0.2),
+    magrittr
 Imports: methods,
-    Rcpp (>= 0.12.7)
+    Rcpp (>= 0.12.7),
+    data.table
 Suggests: testthat,
     knitr, rmarkdown, rgl
 LinkingTo: Rcpp, RcppArmadillo (>= 0.7.400.2.0)
